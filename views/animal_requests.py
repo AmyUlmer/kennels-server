@@ -1,3 +1,18 @@
+# expanded animal response -- client wants the location and customer name for an animal.
+# go to the get_single_animal function. You need to augment this function
+# to make the requested_animal dictionary more robust.
+# import single location and single customer from correct locations.
+# dot at the beginning is important because the other modules are in the same directory
+# how you tell Python where to look for the module.
+# sqlite3 package is built into Python and will allow you to query your database
+# json package is also built into Python and allows you to serialize Python data structures to JSON format, and vice versa.
+# import the Animal class so that you can create instances of it for each row of data that gets returned from the database.
+import sqlite3
+import json
+from models import Animal 
+from .location_requests import get_single_location
+from .customer_requests import get_single_customer
+
 ANIMALS = [
     {
         "id": 1,
@@ -27,25 +42,64 @@ ANIMALS = [
 
 
 def get_all_animals():
-    # This Python module has one method defined in it.
-    # Want to make that method available to any other Python code.
-    # To do that, you import it into the __init__.py module.
-    """Method -- gets all objects in the array"""
-    return ANIMALS
+    """Returns list of dictionaries stored in ANIMALS variable"""
+    # Open a connection to the database
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+
+        # Just use these. It's a Black Box.
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        # Write the SQL query to get the information you want
+        db_cursor.execute("""
+        SELECT
+            a.id,
+            a.name,
+            a.breed,
+            a.status,
+            a.location_id,
+            a.customer_id
+        FROM animal a
+        """)
+
+        # Initialize an empty list to hold all animal representations
+        animals = []
+
+        # Convert rows of data into a Python list
+        dataset = db_cursor.fetchall()
+
+        # Iterate list of data returned from database
+        for row in dataset:
+
+            # Create an animal instance from the current row.
+            # Note that the database fields are specified in
+            # exact order of the parameters defined in the
+            # Animal class above.
+            animal = Animal(row['id'], row['name'], row['breed'],
+                            row['status'], row['location_id'],
+                            row['customer_id'])
+
+            animals.append(animal.__dict__)
+
+    return animals
 
 # Function with a single parameter.
 # id of animal needs to be passed as an argument.
-
-
 def get_single_animal(id):
-    """Looks up single animal"""
+    """Finds the matching animal dictionary for the specified animal id
+    Args:
+        id (int): animal id
+    Returns:
+        object: animal dictionary
+    """
+
     # Variable to hold the found animal, if it exists
     requested_animal = None
 
     # Iterate the ANIMALS list above. Very similar to the
     # for..of loops you used in JavaScript.
     # It iterates the entire list with a for..in loop.
-    # For each animal, it checks if its id property
+    # For each animal, it checks if id property
     # is the same as the id that was passed into the function as a parameter.
     for animal in ANIMALS:
         # Finally, it returns the value of requested_animal.
@@ -54,6 +108,24 @@ def get_single_animal(id):
         # instead of the dot notation that JavaScript used.
         if animal["id"] == id:
             requested_animal = animal
+
+    # invoke the imported methods to get the related resources
+    # for the animal and attach them to the dictionary you found
+
+            # Add the animal's location
+            matching_location = get_single_location(
+                requested_animal["locationId"])
+            requested_animal["location"] = matching_location
+
+            # Add the animal's owner
+            matching_customer = get_single_customer(
+                requested_animal["customerId"])
+            requested_animal["customer"] = matching_customer
+
+            # related location and customer dictionaries are embedded directly on the animal.
+            # delete customerId and locationId keys
+            requested_animal.pop("locationId")
+            requested_animal.pop("customerId")
 
     return requested_animal
 
@@ -98,8 +170,8 @@ def delete_animal(id):
 
 def update_animal(id, new_animal):
     """UPDATE animal"""
-    #function iterates list of animals until it finds right one
-    #then, replaces it with what the client sent as the replacement"""
+    # function iterates list of animals until it finds right one
+    # then, replaces it with what the client sent as the replacement"""
     # Iterate the ANIMALS list, but use enumerate() so that
     # you can access the index value of each item.
     for index, animal in enumerate(ANIMALS):

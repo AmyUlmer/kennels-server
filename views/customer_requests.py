@@ -1,14 +1,29 @@
 CUSTOMERS = [
     {
         "id": 1,
-        "name": "Ryan Tanay",
-        "status": "Bill Paid"
+        "email": "ryan@me.com",
+        "name": "Ryan Tanay"
+    },
+    {
+        "id": 2,
+        "email": "leslieK@park.gov",
+        "name": "Leslie Knope"
+    },
+    {
+        "id": 3,
+        "email": "annP@park.gov",
+        "name": "Ann Perkins"
+    },
+    {
+        "id": 4,
+        "email": "donnaM@park.gov",
+        "name": "Donna Meagle"
     }
 ]
 
 
 def get_all_customers():
-    """Method -- gets all objects in the array"""
+    """Returns list of dictionaries in CUSTOMERS variable"""
     return CUSTOMERS
 
 # Function with a single parameter.
@@ -37,8 +52,7 @@ def get_single_customer(id):
 
 
 def create_customer(customer):
-    """function--take new dictionary representation sent by the client
-        and append it to the LOCATIONS list"""
+    """Args: customer (json string), returns new dictionary with id property added"""
     # Get the id value of the last location in the list
     max_id = CUSTOMERS[-1]["id"]
 
